@@ -13,6 +13,6 @@
  * https://github.com/Azure/dps-keygen.
  * it will look like HostName=#########.azure-devices.net;DeviceId=#######;SharedAccessKey=#################
  */
-#define DEVICE_CONNECTION_STRING    "HostName=0ne00DF7FDA;DeviceId=147ESP32;SharedAccessKey=nhz1XoOpJ3qwTZMt6UNlsBi3UiLozpo9idvo3WSGhq4="
+#define DEVICE_CONNECTION_STRING    "HostName=IoTHubSmartPost.azure-devices.net;DeviceId=147ESP32;SharedAccessKey=RCpWWaHuSu6WVaOzLtgG4Ww81Ul5fUJeM/5b1m0TCwM="
 
 #endif /* IOT_CONFIGS_H */

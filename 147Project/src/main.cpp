@@ -25,6 +25,8 @@ int messageCount = 1;
 static bool messageSending = true;
 static uint64_t send_interval_ms;
 
+
+
 //this function will run when Azure IoT confirms it has recieved a message from the device
 static void SendConfirmationCallback(IOTHUB_CLIENT_CONFIRMATION_RESULT result)
 {
@@ -105,8 +107,44 @@ const int LOADCELL_SCK_PIN = 13;
 HX711 scale;
 
 void setup() {
-  pinMode(LIGHT_SENS, INPUT);
   Serial.begin(9600);
+
+  Serial.println(" > WiFi");
+  Serial.println("Starting connecting WiFi.");
+
+  //initialize the wifi connection using the credentials fron iot_config.h
+  delay(10);
+  WiFi.mode(WIFI_AP);
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+    hasWifi = false;
+  }
+  hasWifi = true;
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+  Serial.println(" > IoT Hub");
+  
+  //connect to IoT Hub using the connection string from iot_config.h
+  if (!Esp32MQTTClient_Init((const uint8_t*)connectionString, true))
+  {
+    hasIoTHub = false;
+    Serial.println("Initializing IoT hub failed.");
+    return;
+  }
+  hasIoTHub = true;
+
+  //set up all the callback functions, all the subscriptions are handled in ESP32MQTTCLIENT
+  Esp32MQTTClient_SetSendConfirmationCallback(SendConfirmationCallback);
+  Esp32MQTTClient_SetMessageCallback(MessageCallback);
+  Esp32MQTTClient_SetDeviceTwinCallback(DeviceTwinCallback);
+  Esp32MQTTClient_SetDeviceMethodCallback(DeviceMethodCallback);
+  Serial.println("Start sending events.");
+  send_interval_ms = millis();              //state machine timer for sending telemetry
+
+  pinMode(LIGHT_SENS, INPUT);
   rtc_cpu_freq_config_t config;
   rtc_clk_cpu_freq_get_config(&config);
   rtc_clk_cpu_freq_to_config(RTC_CPU_FREQ_80M, &config);
@@ -121,6 +159,7 @@ void loop() {
   int threshold = 0;
   int curr_light;
   bool door = false;
+  int weight = 0;
 
   Serial.print("Door Status: ");
   curr_light = analogRead(LIGHT_SENS);
@@ -132,26 +171,25 @@ void loop() {
   }
 
   Serial.print("Current Weight: ");
-  Serial.println(scale.get_units(10), 5);
+  weight = scale.get_units(10);
+  Serial.println(weight, 5);
   Serial.println("");
-
-// Load cell calibration
-/*if (scale.is_ready()) {
-    scale.set_scale();    
-    Serial.println("Tare... remove any weights from the scale.");
-    delay(5000);
-    scale.tare();
-    Serial.println("Tare done...");
-    Serial.print("Place a known weight on the scale...");
-    delay(5000);
-    long reading = scale.get_units(10);
-    Serial.print("Result: ");
-    Serial.println(reading);
-  } 
-  else {
-    Serial.println("HX711 not found.");
-  }*/
   
-
+ if (hasWifi && hasIoTHub)
+  {
+    if (messageSending && (int)(millis() - send_interval_ms) >= INTERVAL)
+    {  
+      char messagePayload[MESSAGE_MAX_LEN];         //create an array of characters to hold the message that will be sent to Azure IoT Hub
+      snprintf(messagePayload, MESSAGE_MAX_LEN, messageData, messageCount++, weight, door); //build the message from the function data and the measurements defined at the top (temp, humidity, led)
+      Serial.println(messagePayload);                                                                     //write the message to the serial monitor for debugging
+      EVENT_INSTANCE* message = Esp32MQTTClient_Event_Generate(messagePayload, MESSAGE);                  //get ready to send a message to the MQTT broker
+      Esp32MQTTClient_SendEventInstance(message);                                                         //send the message
+      send_interval_ms = millis();                                                                        //update the state machine timer
+    }
+    else
+    {
+      Esp32MQTTClient_Check();                                                                            //keep the connection to Auzre IoT Hub alive even when not sending messages
+    }
+  }
   delay(1000);
 }
