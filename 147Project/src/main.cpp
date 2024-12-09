@@ -159,7 +159,7 @@ void loop() {
   int threshold = 0;
   int curr_light;
   bool door = false;
-  int weight = 0;
+  float weight;
 
   Serial.print("Door Status: ");
   curr_light = analogRead(LIGHT_SENS);
