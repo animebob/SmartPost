@@ -18,7 +18,7 @@ const char* ssid     = IOT_CONFIG_WIFI_SSID;
 const char* password = IOT_CONFIG_WIFI_PASSWORD;
 static const char* connectionString = DEVICE_CONNECTION_STRING;
 
-const char *messageData = "{\"messageId\":%d, \"Weight\":%f, \"OpenStatus:\":%d}";  //Structure of the message sent to Azure IoT Hub
+const char *messageData = "{\"messageId\":%d, \"Weight\":%f, \"OpenStatus\":%d}";  //Structure of the message sent to Azure IoT Hub
 static bool hasIoTHub = false;
 static bool hasWifi = false;
 int messageCount = 1;
@@ -151,7 +151,7 @@ void setup() {
   rtc_clk_cpu_freq_set_config_fast(&config);
   scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
             
-  scale.set_scale(217.396);   // this value is obtained by calibrating the scale with known weights; see the README for details
+  scale.set_scale(217.5);   // this value is obtained by calibrating the scale with known weights; see the README for details
   scale.tare();               // reset the scale to 0
 }
  
