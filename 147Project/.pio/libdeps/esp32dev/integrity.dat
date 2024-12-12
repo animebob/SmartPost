@@ -1,0 +1,8 @@
+bogde/HX711@^0.7.5
+AzureIoTProtocol_MQTT
+AzureIoTUtility
+vschina/ESP32 Azure IoT Arduino@^0.1.0
+ewertons/Espressif ESP32 Azure IoT Kit Sensors
+AzureIoTSocket_WiFi
+AzureIoTHub
+azure/Azure SDK for C@^1.1.8
